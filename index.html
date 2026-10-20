@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מפגש יום הולדת לבת-שבע</title>
-    <!-- חיבור לספריית Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         :root {
@@ -305,24 +302,8 @@
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-
-    let db = null;
-    let itemsRef = null;
-    let itemsData = [];
-    let currentUser = null;
-if (item.img) {
-    img.src = item.img;
-}
-const initialItemsList = [
+    // רשימת הפריטים התקינה
+    const initialItemsList = [
         { 
             id: 1, 
             name: "סלט חסה גדול + רוטב", 
@@ -339,15 +320,13 @@ const initialItemsList = [
             id: 3, 
             name: "תפו\"א מוקרמים", 
             assignedTo: null, 
-            // קישור יציב לתפוחי אדמה מוקרמים בתבנית
             img: "potatoes.jpg" 
         },
         { 
             id: 4, 
             name: "פסטה מוקרמת", 
             assignedTo: null, 
-            // קישור יציב לפסטה מוקרמת ברוטב שמנת
-            img: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=400&auto=format&fit=crop&q=80" 
+            img: "https://images.unsplash.com/photo-1621996346565-e3d5d6281699?w=400&auto=format&fit=crop&q=80" 
         },
         { 
             id: 5, 
@@ -375,28 +354,23 @@ const initialItemsList = [
         }
     ];
 
+    const STORAGE_KEY = "birthday_clean_v1";
+    let itemsData = [];
+    let currentUser = null;
+
     function setupApp() {
         currentUser = localStorage.getItem("birthday_user_active");
 
-        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-            itemsRef = db.ref("items");
-
-            itemsRef.on("value", (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    itemsData = data;
-                } else {
-                    itemsRef.set(initialItemsList);
-                    itemsData = initialItemsList;
-                }
-                renderItems();
-            });
+        const localSaved = localStorage.getItem(STORAGE_KEY);
+        if (localSaved) {
+            try {
+                itemsData = JSON.parse(localSaved);
+            } catch (e) {
+                itemsData = initialItemsList;
+            }
         } else {
-            const localSaved = localStorage.getItem("birthday_local_items");
-            itemsData = localSaved ? JSON.parse(localSaved) : initialItemsList;
-            renderItems();
+            itemsData = initialItemsList;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(itemsData));
         }
 
         if (currentUser) {
@@ -441,7 +415,7 @@ const initialItemsList = [
         const item = itemsData.find(i => i.id === id);
         if (item && !item.assignedTo) {
             item.assignedTo = currentUser;
-            syncUpdate();
+            saveAndRender();
         }
     }
 
@@ -449,17 +423,13 @@ const initialItemsList = [
         const item = itemsData.find(i => i.id === id);
         if (item && item.assignedTo === currentUser) {
             item.assignedTo = null;
-            syncUpdate();
+            saveAndRender();
         }
     }
 
-    function syncUpdate() {
-        if (itemsRef) {
-            itemsRef.set(itemsData);
-        } else {
-            localStorage.setItem("birthday_local_items", JSON.stringify(itemsData));
-            renderItems();
-        }
+    function saveAndRender() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(itemsData));
+        renderItems();
     }
 
     function renderItems() {
@@ -471,12 +441,16 @@ const initialItemsList = [
             const card = document.createElement("div");
             card.className = "item-card";
 
+            // תמונה עם בדיקת תקינות
             const img = document.createElement("img");
-            img.src = item.img;
+            if (item.img) {
+                img.src = item.img;
+            }
             img.alt = item.name;
             img.className = "item-img";
             card.appendChild(img);
 
+            // פרטי המנה
             const infoDiv = document.createElement("div");
             infoDiv.className = "item-info";
 
@@ -496,6 +470,7 @@ const initialItemsList = [
             infoDiv.appendChild(status);
             card.appendChild(infoDiv);
 
+            // כפתור פעולה
             const actionDiv = document.createElement("div");
 
             if (!item.assignedTo) {
