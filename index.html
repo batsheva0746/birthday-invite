@@ -319,7 +319,9 @@
     let itemsRef = null;
     let itemsData = [];
     let currentUser = null;
-
+if (item.img) {
+    img.src = item.img;
+}
 const initialItemsList = [
         { 
             id: 1, 
