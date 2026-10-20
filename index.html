@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מפגש חברות</title>
+    <!-- חיבור לספריית Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --vintage-bg: #faf6f0;
+            --card-bg: #ffffff;
+            --rose-dark: #b86b62;
+            --rose-gold: #c98b79;
+            --rose-soft: #f4eae6;
+            --brown-text: #4a3b32;
+            --brown-light: #7c685b;
+            --border-color: #ebdcd2;
+            --success-color: #557a55;
+            --cancel-color: #a85d5d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--vintage-bg);
+            background-image: radial-gradient(#eadfd7 1px, transparent 1px);
+            background-size: 18px 18px;
+            color: var(--brown-text);
+            margin: 0;
+            padding: 24px 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            outline: 6px double var(--rose-soft);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(74, 59, 50, 0.08);
+            padding: 36px 28px;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px dashed var(--rose-gold);
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+        }
+
+        .party-tag {
+            display: inline-block;
+            background: var(--rose-soft);
+            color: var(--rose-dark);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--brown-text);
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--rose-dark);
+            margin-top: 6px;
+        }
+
+        .details-banner {
+            margin-top: 18px;
+            background: linear-gradient(135deg, #fffaf6 0%, #f7ede6 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--brown-light);
+        }
+
+        .details-banner strong {
+            color: var(--brown-text);
+        }
+
+        .card {
+            background-color: #fdfbf9;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 26px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            max-width: 320px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            border: 1.5px solid var(--rose-gold);
+            border-radius: 8px;
+            outline: none;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            color: var(--brown-text);
+        }
+
+        .main-btn {
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-dark) 100%);
+            color: #ffffff;
+            cursor: pointer;
+            margin-top: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .main-btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .greeting-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--rose-soft);
+            border: 1px solid var(--border-color);
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+        }
+
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px 18px;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--brown-text);
+        }
+
+        .item-status {
+            font-size: 0.9rem;
+            color: var(--brown-light);
+            margin-top: 3px;
+        }
+
+        .status-taken {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .btn-action {
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-select {
+            background-color: var(--success-color);
+            color: #ffffff;
+        }
+
+        .btn-select:hover {
+            background-color: #446344;
+        }
+
+        .btn-cancel {
+            background-color: var(--cancel-color);
+            color: #ffffff;
+            font-size: 0.85rem;
+            padding: 6px 12px;
+        }
+
+        .badge-locked {
+            background-color: #eee7e2;
+            color: var(--brown-light);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--rose-dark);
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="party-tag">חוגגות יחד</div>
+        <h1>יום הולדת לבת-שבע</h1>
+        <div class="subtitle">חגיגת יום הולדת באווירה חמה ושמחה</div>
+
+        <div class="details-banner">
+            <strong>מתי ואיפה?</strong> יום רביעי אצל גולדשטיין<br>
+            תפריט חלבי עשיר ומפנק. כל אחת בוחרת מנה להכנה.
+        </div>
+    </header>
+
+    <!-- שלב אישור הגעה -->
+    <section id="authBox">
+        <div class="card">
+            <h3 style="margin-top: 0; color: var(--rose-dark); font-size: 1.3rem;">אישור הגעה</h3>
+            <p style="margin-bottom: 18px; color: var(--brown-light);">
+                שמחות שאת באה לחגוג איתנו!<br>
+                רשמי את שמך כדי לבחור מה תרצי להכין:
+            </p>
+            <input type="text" id="participantName" placeholder="השם המלא שלך..." autocomplete="off">
+            <br>
+            <button class="main-btn" onclick="confirmArrival()">אישור והמשך</button>
+        </div>
+    </section>
+
+    <!-- שלב רשימת המנות -->
+    <section id="listBox" class="hidden">
+        <div class="greeting-bar">
+            <span>שלום, <strong id="displayName" style="color: var(--rose-dark);"></strong></span>
+            <button class="btn-link" onclick="logout()">החלפת שם</button>
+        </div>
+
+        <div class="items-list" id="itemsContainer">
+            <!-- הנתונים נטענים בזמן אמת -->
+        </div>
+    </section>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    let db = null;
+    let itemsRef = null;
+    let itemsData = [];
+    let currentUser = null;
+
+    // כל הפריטים מוגדרים כעת פתוחים לבחירה
+    const initialItemsList = [
+        { id: 1, name: "סלט חסה גדול", assignedTo: null },
+        { id: 2, name: "רוטב לחסה", assignedTo: null },
+        { id: 3, name: "סלט כרוב", assignedTo: null },
+        { id: 4, name: "תפו\"א מוקרמים", assignedTo: null },
+        { id: 5, name: "פסטה מוקרמת", assignedTo: null },
+        { id: 6, name: "פיצות", assignedTo: null },
+        { id: 7, name: "הום פרייז", assignedTo: null },
+        { id: 8, name: "אייס קפה ביתי", assignedTo: null },
+        { id: 9, name: "חד\"פ ועיצוב (לדאוג לכל העריכה)", assignedTo: null }
+    ];
+
+    function setupApp() {
+        currentUser = localStorage.getItem("birthday_user_active");
+
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            itemsRef = db.ref("items");
+
+            itemsRef.on("value", (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    itemsData = data;
+                } else {
+                    itemsRef.set(initialItemsList);
+                    itemsData = initialItemsList;
+                }
+                renderItems();
+            });
+        } else {
+            const localSaved = localStorage.getItem("birthday_local_items");
+            itemsData = localSaved ? JSON.parse(localSaved) : initialItemsList;
+            renderItems();
+        }
+
+        if (currentUser) {
+            showMenu();
+        } else {
+            showLogin();
+        }
+    }
+
+    function confirmArrival() {
+        const input = document.getElementById("participantName");
+        const val = input.value.trim();
+        if (!val) {
+            alert("נא להזין שם כדי להמשיך");
+            return;
+        }
+        currentUser = val;
+        localStorage.setItem("birthday_user_active", currentUser);
+        showMenu();
+    }
+
+    function logout() {
+        localStorage.removeItem("birthday_user_active");
+        currentUser = null;
+        document.getElementById("participantName").value = "";
+        showLogin();
+    }
+
+    function showLogin() {
+        document.getElementById("authBox").classList.remove("hidden");
+        document.getElementById("listBox").classList.add("hidden");
+    }
+
+    function showMenu() {
+        document.getElementById("authBox").classList.add("hidden");
+        document.getElementById("listBox").classList.remove("hidden");
+        document.getElementById("displayName").textContent = currentUser;
+        renderItems();
+    }
+
+    function takeItem(id) {
+        const item = itemsData.find(i => i.id === id);
+        if (item && !item.assignedTo) {
+            item.assignedTo = currentUser;
+            syncUpdate();
+        }
+    }
+
+    function releaseItem(id) {
+        const item = itemsData.find(i => i.id === id);
+        if (item && item.assignedTo === currentUser) {
+            item.assignedTo = null;
+            syncUpdate();
+        }
+    }
+
+    function syncUpdate() {
+        if (itemsRef) {
+            itemsRef.set(itemsData);
+        } else {
+            localStorage.setItem("birthday_local_items", JSON.stringify(itemsData));
+            renderItems();
+        }
+    }
+
+    function renderItems() {
+        const container = document.getElementById("itemsContainer");
+        if (!container) return;
+        container.innerHTML = "";
+
+        itemsData.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "item-card";
+
+            const infoDiv = document.createElement("div");
+            const title = document.createElement("div");
+            title.className = "item-name";
+            title.textContent = item.name;
+            infoDiv.appendChild(title);
+
+            const status = document.createElement("div");
+            status.className = "item-status";
+
+            if (item.assignedTo) {
+                status.innerHTML = `נלקח ע"י <span class="status-taken">${item.assignedTo}</span>`;
+            } else {
+                status.textContent = "פנוי לבחירה";
+            }
+            infoDiv.appendChild(status);
+            card.appendChild(infoDiv);
+
+            const actionDiv = document.createElement("div");
+
+            if (!item.assignedTo) {
+                const btn = document.createElement("button");
+                btn.className = "btn-action btn-select";
+                btn.textContent = "אני מכינה";
+                btn.onclick = () => takeItem(item.id);
+                actionDiv.appendChild(btn);
+            } else if (item.assignedTo === currentUser) {
+                const cancelBtn = document.createElement("button");
+                cancelBtn.className = "btn-action btn-cancel";
+                cancelBtn.textContent = "ביטול";
+                cancelBtn.onclick = () => releaseItem(item.id);
+                actionDiv.appendChild(cancelBtn);
+            } else {
+                const badge = document.createElement("span");
+                badge.className = "badge-locked";
+                badge.textContent = "תפוס";
+                actionDiv.appendChild(badge);
+            }
+
+            card.appendChild(actionDiv);
+            container.appendChild(card);
+        });
+    }
+
+    window.onload = setupApp;
+</script>
+
+</body>
+</html>
