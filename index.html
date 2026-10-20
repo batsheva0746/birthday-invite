@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מפגש חברות</title>
+    <title>מפגש יום הולדת לבת-שבע</title>
     <!-- חיבור לספריית Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -42,7 +42,7 @@
             outline: 6px double var(--rose-soft);
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(74, 59, 50, 0.08);
-            padding: 36px 28px;
+            padding: 36px 24px;
             box-sizing: border-box;
         }
 
@@ -147,21 +147,42 @@
         .items-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
         }
 
         .item-card {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             background: #ffffff;
             border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .item-img {
+            width: 80px;
+            height: 80px;
             border-radius: 10px;
-            padding: 14px 18px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+            background-color: #f7f3ee;
+        }
+
+        .item-info {
+            flex-grow: 1;
         }
 
         .item-name {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 1.05rem;
             color: var(--brown-text);
         }
@@ -169,12 +190,12 @@
         .item-status {
             font-size: 0.9rem;
             color: var(--brown-light);
-            margin-top: 3px;
+            margin-top: 4px;
         }
 
         .status-taken {
             color: var(--success-color);
-            font-weight: 600;
+            font-weight: bold;
         }
 
         .btn-action {
@@ -184,6 +205,7 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
+            flex-shrink: 0;
         }
 
         .btn-select {
@@ -205,9 +227,11 @@
         .badge-locked {
             background-color: #eee7e2;
             color: var(--brown-light);
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 6px;
             font-size: 0.85rem;
+            font-weight: 500;
+            flex-shrink: 0;
         }
 
         .btn-link {
@@ -222,6 +246,23 @@
         .hidden {
             display: none;
         }
+
+        @media (max-width: 480px) {
+            .item-card {
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: right;
+            }
+            .item-img {
+                width: 100%;
+                height: 140px;
+            }
+            .btn-action, .badge-locked {
+                width: 100%;
+                margin-top: 8px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -234,7 +275,7 @@
 
         <div class="details-banner">
             <strong>מתי ואיפה?</strong> יום רביעי אצל גולדשטיין<br>
-            תפריט חלבי עשיר ומפנק. כל אחת בוחרת מנה להכנה.
+            תפריט חלבי עשיר ומפנק. כל אחת בוחרת מנה להכנה!
         </div>
     </header>
 
@@ -248,20 +289,18 @@
             </p>
             <input type="text" id="participantName" placeholder="השם המלא שלך..." autocomplete="off">
             <br>
-            <button class="main-btn" onclick="confirmArrival()">אישור והמשך</button>
+            <button class="main-btn" onclick="confirmArrival()">אישור והמשך לתפריט</button>
         </div>
     </section>
 
-    <!-- שלב רשימת המנות -->
+    <!-- שלב רשימת המנות עם התמונות -->
     <section id="listBox" class="hidden">
         <div class="greeting-bar">
             <span>שלום, <strong id="displayName" style="color: var(--rose-dark);"></strong></span>
             <button class="btn-link" onclick="logout()">החלפת שם</button>
         </div>
 
-        <div class="items-list" id="itemsContainer">
-            <!-- הנתונים נטענים בזמן אמת -->
-        </div>
+        <div class="items-list" id="itemsContainer"></div>
     </section>
 </div>
 
@@ -281,17 +320,57 @@
     let itemsData = [];
     let currentUser = null;
 
-    // כל הפריטים מוגדרים כעת פתוחים לבחירה
-    const initialItemsList = [
-        { id: 1, name: "סלט חסה גדול", assignedTo: null },
-        { id: 2, name: "רוטב לחסה", assignedTo: null },
-        { id: 3, name: "סלט כרוב", assignedTo: null },
-        { id: 4, name: "תפו\"א מוקרמים", assignedTo: null },
-        { id: 5, name: "פסטה מוקרמת", assignedTo: null },
-        { id: 6, name: "פיצות", assignedTo: null },
-        { id: 7, name: "הום פרייז", assignedTo: null },
-        { id: 8, name: "אייס קפה ביתי", assignedTo: null },
-        { id: 9, name: "חד\"פ ועיצוב (לדאוג לכל העריכה)", assignedTo: null }
+const initialItemsList = [
+        { 
+            id: 1, 
+            name: "סלט חסה גדול + רוטב", 
+            assignedTo: null, 
+            img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&auto=format&fit=crop&q=80" 
+        },
+        { 
+            id: 2, 
+            name: "סלט כרוב", 
+            assignedTo: null, 
+            img: "cabbage.png"
+        },
+        { 
+            id: 3, 
+            name: "תפו\"א מוקרמים", 
+            assignedTo: null, 
+            // קישור יציב לתפוחי אדמה מוקרמים בתבנית
+            img: "תפוא.jpg" 
+        },
+        { 
+            id: 4, 
+            name: "פסטה מוקרמת", 
+            assignedTo: null, 
+            // קישור יציב לפסטה מוקרמת ברוטב שמנת
+            img: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=400&auto=format&fit=crop&q=80" 
+        },
+        { 
+            id: 5, 
+            name: "פיציות", 
+            assignedTo: null, 
+            img: "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400&auto=format&fit=crop&q=80" 
+        },
+        { 
+            id: 6, 
+            name: "הום פרייז", 
+            assignedTo: null, 
+            img: "הום פרייז.jpg" 
+        },
+        { 
+            id: 7, 
+            name: "אייס קפה ביתי", 
+            assignedTo: null, 
+            img: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&auto=format&fit=crop&q=80" 
+        },
+        { 
+            id: 8, 
+            name: "חד\"פ ועיצוב (לדאוג לכל העריכה)", 
+            assignedTo: null, 
+            img: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&auto=format&fit=crop&q=80" 
+        }
     ];
 
     function setupApp() {
@@ -390,7 +469,15 @@
             const card = document.createElement("div");
             card.className = "item-card";
 
+            const img = document.createElement("img");
+            img.src = item.img;
+            img.alt = item.name;
+            img.className = "item-img";
+            card.appendChild(img);
+
             const infoDiv = document.createElement("div");
+            infoDiv.className = "item-info";
+
             const title = document.createElement("div");
             title.className = "item-name";
             title.textContent = item.name;
